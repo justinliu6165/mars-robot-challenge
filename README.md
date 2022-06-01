@@ -12,12 +12,7 @@ Input instructions for robots on Mars.
 - The maximum value for any coordinate is 50.
 - If robot moves off the grid, then it becomes LOST.
 
-Sample input and output shown below.
-
-Assumptions made:
-
-- The input will be inserted as one string with line breaks `/n`. Double to divide each robot's instructions. 
-
+Sample input and output shown below. This input is read from the file `./sampleInput.txt` file.
 
 ```
 Sample Input
@@ -33,7 +28,7 @@ FRRFLLFFRRFLL
 LLFFFLFLFL
 ```
 
-Example of input as string: `5 3\n1 1 E\nRFRFRFRF\n\n3 2 N\nFRRFLLFFRRFLL\n\n0 3 W\nLLFFFLFLFL`
+Expected string: `5 3\n1 1 E\nRFRFRFRF\n\n3 2 N\nFRRFLLFFRRFLL\n\n0 3 W\nLLFFFLFLFL`
 
 ```
 Sample Output
