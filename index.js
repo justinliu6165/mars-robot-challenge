@@ -48,9 +48,97 @@ const refactorInput = (input) => {
     };
 }
 
-function createGridAndRun (input) {
-    const refactoredInput = refactorInput(input);
-    console.log(refactoredInput);
+const createRobot = ({start=[0,0], orientation='N', cmd}) => {
+    return {
+        x: Number(start[0]),
+        y: Number(start[1]),
+        compass: ['N', 'E', 'S', 'W'],
+        cmd,
+        orientation,
+        changeOrientation(turn) {
+            let currentIdx = this.compass.indexOf(this.orientation);
+    
+            if(turn === 'R') {
+                let nextIndex = currentIdx !== this.compass.length - 1 ? currentIdx + 1 : 0; 
+                this.orientation = this.compass[nextIndex];
+            } else if (turn === 'L') {
+                let nextIndex = currentIdx !== 0 ? currentIdx - 1 : this.compass.length - 1; 
+                this.orientation = this.compass[nextIndex];
+            }
+        },
+        moveForward() {
+            switch(this.orientation) {
+                case 'N':
+                    this.y += 1;
+                    break;
+                case 'E':
+                    this.x += 1;
+                    break;
+                case 'S':
+                    this.y -= 1;
+                    break;
+                case 'W':
+                    this.x -= 1;
+                    break;
+            }
+        },
+        moveRobot() {
+            this.cmd.split('').forEach(move => {
+                if (move !== 'F') {
+                    this.changeOrientation(move);
+                } else {
+                    this.moveForward();
+                }
+            })
+        },
+        outputData() {
+            return {
+                x: this.x,
+                y: this.y,
+                orientation: this.orientation
+            }
+        }
+    }
 }
 
-createGridAndRun(sampleInput);
+const createGrid = (input) => {
+
+    function setBounds(gridLayout) {
+        return {
+            min: {x: 0, y: 0},
+            max: {x: Number(gridLayout[0]), y: Number(gridLayout[1])}
+        }
+    }
+
+    return {
+        robotCmds: input.robotCmds,
+        results: [],
+        bounds: setBounds(input.gridLayout),
+        runRobots() {
+
+            // Init robots
+            this.robotCmds.forEach((robotInfo) => {
+                const robot = createRobot(robotInfo);
+                // Move each robot
+                robot.moveRobot();
+                // Push end result to this.results
+                this.results.push(robot.outputData())
+            });
+
+        },
+        outputAllData() {
+            console.log(this.results);
+        }
+    }
+}
+
+function initGridAndRun (input) {
+    const refactoredInput = refactorInput(input);
+    const grid = createGrid(refactoredInput);
+    
+    grid.runRobots();
+
+    grid.outputAllData();
+}
+
+initGridAndRun(sampleInput);
