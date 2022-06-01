@@ -48,13 +48,28 @@ const refactorInput = (input) => {
     };
 }
 
-const createRobot = ({start=[0,0], orientation='N', cmd}) => {
+const createRobot = ({start=[0,0], orientation='N', cmd, bounds, lostCoordinates}) => {
     return {
         x: Number(start[0]),
         y: Number(start[1]),
         compass: ['N', 'E', 'S', 'W'],
         cmd,
         orientation,
+        isLost: false,
+        lostCoordinates,
+        checkOutOfBounds(){
+            return (
+                this.x < bounds.min.x || this.x > bounds.max.x
+                || this.y < bounds.min.y || this.y > bounds.max.y
+            )
+        },
+        setLostCoord(x,y) {
+            if(!this.lostCoordinates[x]) {
+                this.lostCoordinates[x] = [y]
+            } else {
+                this.lostCoordinates[x].push(y);
+            }
+        },
         changeOrientation(turn) {
             let currentIdx = this.compass.indexOf(this.orientation);
     
@@ -67,22 +82,43 @@ const createRobot = ({start=[0,0], orientation='N', cmd}) => {
             }
         },
         moveForward() {
+            let tmpX = this.x;
+            let tmpY = this.y;
+
             switch(this.orientation) {
                 case 'N':
-                    this.y += 1;
+                    tmpY += 1;
                     break;
                 case 'E':
-                    this.x += 1;
+                    tmpX += 1;
                     break;
                 case 'S':
-                    this.y -= 1;
+                    tmpY -= 1;
                     break;
                 case 'W':
-                    this.x -= 1;
+                    tmpX -= 1;
                     break;
             }
+            
+            // Check if lost coordinate
+            let notLostCoordinate = !(this.lostCoordinates[tmpX] && this.lostCoordinates[tmpX].includes(tmpY));
+            
+            if(notLostCoordinate) {
+
+                // Update coordinates to robot
+                this.x = tmpX;
+                this.y = tmpY;
+    
+                // If out of bounds, set robot as lost, set coordinate as lost coordinate
+                if(this.checkOutOfBounds()) {
+                    this.isLost = true;
+                    this.setLostCoord(this.x, this.y);
+                }
+
+            };
         },
         moveRobot() {
+            // Move forward or change orientation
             this.cmd.split('').forEach(move => {
                 if (move !== 'F') {
                     this.changeOrientation(move);
@@ -95,7 +131,8 @@ const createRobot = ({start=[0,0], orientation='N', cmd}) => {
             return {
                 x: this.x,
                 y: this.y,
-                orientation: this.orientation
+                orientation: this.orientation,
+                isLost: this.isLost
             }
         }
     }
@@ -114,14 +151,23 @@ const createGrid = (input) => {
         robotCmds: input.robotCmds,
         results: [],
         bounds: setBounds(input.gridLayout),
+        lostCoordinates: {},
         runRobots() {
 
-            // Init robots
+            // Init each robots
             this.robotCmds.forEach((robotInfo) => {
-                const robot = createRobot(robotInfo);
-                // Move each robot
+                // Pass info to create new robot
+                const robot = createRobot({bounds: this.bounds, lostCoordinates: this.lostCoordinates, ...robotInfo});
+                
+                // Move robot
                 robot.moveRobot();
-                // Push end result to this.results
+                
+                // If lost coordinates, set to the Grid
+                if(robot.isLost) {
+                    this.lostCoordinates = robot.lostCoordinates;
+                }
+
+                // Push end position of robot to results
                 this.results.push(robot.outputData())
             });
 
