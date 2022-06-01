@@ -3,9 +3,13 @@
 // 3. Init grid using input data
 // 4. Init robots and run
 // 5. Store robot location data
-// 6. Output data as string to terminal
+// 6. Output data as string to console
 
 const fs = require('fs');
+
+// =========
+// Fetch input from txt file
+// =========
 
 let sampleInput = '';
 
@@ -16,10 +20,15 @@ try {
     throw new Error(err);
 }
 
+// =========
+// Refactor data for usability
+// =========
+
 const refactorInput = (input) => {
     // Get grid bondaries
     let gridLayout = input.substr(0, input.indexOf('\n')).split(' ');
     
+    // Get robot commands
     let robotCmds = input
         .substr(input.indexOf('\n') + 1)
         .split('\n\n')
@@ -47,6 +56,22 @@ const refactorInput = (input) => {
         robotCmds
     };
 }
+
+// =========
+// Check thresholds
+// =========
+const checkInputLength = (input) => {
+    if(input.length > 100) throw Error("Input cannot have more than 100 characters.")
+}
+const checkCoordThreshold = (coord) => {
+    coord.forEach(value => {
+        if(value > 50) throw Error("Coordinates cannot be more than 50.");
+    }) 
+}
+
+// =========
+// Factory function: Create robot instance
+// =========
 
 const createRobot = ({start=[0,0], orientation='N', cmd, bounds, lostCoordinates}) => {
     return {
@@ -138,22 +163,34 @@ const createRobot = ({start=[0,0], orientation='N', cmd, bounds, lostCoordinates
     }
 }
 
+// =========
+// Factory function: Create grid instance
+// =========
+
 const createGrid = (input) => {
 
-    function setBounds(gridLayout) {
+    const setBounds = (gridLayout) => {
         return {
             min: {x: 0, y: 0},
             max: {x: Number(gridLayout[0]), y: Number(gridLayout[1])}
         }
     }
 
+    // Check if input length is greater than 100
+    checkInputLength(input);
+
+    const { gridLayout, robotCmds } = refactorInput(input);
+    
+    // Check if coordinates are greater than 50
+    checkCoordThreshold(gridLayout);
+    robotCmds.forEach(robot => checkCoordThreshold(robot.start));
+
     return {
-        robotCmds: input.robotCmds,
+        robotCmds: robotCmds,
         results: [],
-        bounds: setBounds(input.gridLayout),
+        bounds: setBounds(gridLayout),
         lostCoordinates: {},
         runRobots() {
-
             // Init each robots
             this.robotCmds.forEach((robotInfo) => {
                 // Pass info to create new robot
@@ -173,18 +210,33 @@ const createGrid = (input) => {
 
         },
         outputAllData() {
-            console.log(this.results);
+            return this.results.reduce((d,item) => {
+                d+= `${item.x} ${item.y} ${item.orientation} ${item.isLost ? 'LOST' : ''}\n`
+                return d;
+            }, '');      
+
         }
     }
 }
 
-function initGridAndRun (input) {
-    const refactoredInput = refactorInput(input);
-    const grid = createGrid(refactoredInput);
+// =========
+// Initialise grid and robots, and output to the console
+// =========
+
+const initGridAndRun = (input) => {
+    // const refactoredInput = refactorInput(input);
+    const grid = createGrid(input);
     
     grid.runRobots();
+    
+    console.log("======Input=======");
+    console.log(input);
+    console.log("======Input=======\n");  
 
-    grid.outputAllData();
+    console.log("======Output======");
+    console.log(grid.outputAllData());
+    console.log("======Output======");
+    
 }
 
 initGridAndRun(sampleInput);
